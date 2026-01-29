@@ -31,6 +31,6 @@ app.post('/verify', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log( Сервер запущен на порту ${PORT});
+  console.log('Server started on port ' + PORT);
 });
 
