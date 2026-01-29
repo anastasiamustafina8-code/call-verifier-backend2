@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 
 // Проверка, что сервер жив
 app.get('/', (req, res) => {
-  res.send(' Call Verifier backend работает!');
+  res.send('✅ Call Verifier backend работает!');
 });
 
 // Основной эндпоинт
