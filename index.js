@@ -8,14 +8,14 @@ const PORT = process.env.PORT || 3000;
 
 // Тестовый endpoint
 app.get('/', (req, res) => {
-  res.send('✅ Call Verifier backend работает!');
+  res.send(' Call Verifier backend работает!');
 });
 
 // Основной endpoint для верификации звонков
 app.post('/verify', (req, res) => {
   const { method, success, userPhone, callerPhone } = req.body;
 
-  console.log('📞 VERIFY:', {
+  console.log(' VERIFY:', {
     method,
     success,
     userPhone,
@@ -31,6 +31,6 @@ app.post('/verify', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(🚀 Сервер запущен на порту ${PORT});
+  console.log( Сервер запущен на порту ${PORT});
 });
 
