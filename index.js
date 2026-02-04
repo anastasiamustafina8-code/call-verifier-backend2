@@ -1,111 +1,81 @@
-const express = require('express');
+const express = require("express");
+const cors = require("cors");
+
 const app = express();
-
-app.use(express.json());
-
 const PORT = process.env.PORT || 3000;
 
-// Простая "база" звонков в памяти
-const calls = [];
-// элемент:
-// {
-//   callerPhone, calleePhone,
-//   callerName, calleeName,
-//   callerConfirmed, calleeConfirmed,
-//   timestamp
-// }
+app.use(cors());
+app.use(express.json());
 
-// Проверка, что сервер жив
-app.get('/', (req, res) => {
-  res.send('✅ Call Verifier backend работает!');
+// Память: номер телефона -> объект с флагом verified и именем
+const users = {}; // пример: { "+79991234567": { name: "Аня", verified: true } }
+
+// 1) Подтвердить личность
+// POST /verify  { phone: "+7999...", name: "Аня" }
+app.post("/verify", (req, res) => {
+  const { phone, name } = req.body;
+
+  if (!phone) {
+    return res.status(400).json({
+      success: false,
+      message: "phone is required"
+    });
+  }
+
+  if (!users[phone]) {
+    users[phone] = { name: name || "", verified: false };
+  }
+
+  users[phone].name = name || users[phone].name;
+  users[phone].verified = true;
+
+  return res.json({
+    success: true,
+    phone,
+    name: users[phone].name,
+    verified: users[phone].verified
+  });
 });
 
-// Основной эндпоинт
-app.post('/verify', (req, res) => {
-  try {
-    const { method, success, userName, userPhone, callerPhone, calleePhone } = req.body;
+// 2) Проверить статус абонента
+// GET /status?phone=+7999...
+app.get("/status", (req, res) => {
+  const phone = req.query.phone;
 
-    console.log('VERIFY request:', {
-      method,
-      success,
-      userName,
-      userPhone,
-      callerPhone,
-      calleePhone,
-      timestamp: new Date().toISOString()
+  if (!phone) {
+    return res.status(400).json({
+      success: false,
+      message: "phone query param is required"
     });
-
-    // ищем существующую запись звонка по паре номеров
-    let call = calls.find(
-      c =>
-        c.callerPhone === callerPhone &&
-        c.calleePhone === calleePhone
-    );
-
-    // ---------- режим ТОЛЬКО ПРОВЕРКИ ----------
-    if (method === 'check_only') {
-      if (!call) {
-        return res.json({
-          success: true,
-          status: 'no_call',
-          call: null
-        });
-      }
-
-      let status = 'one_confirmed';
-      if (call.callerConfirmed && call.calleeConfirmed) {
-        status = 'both_confirmed';
-      } else if (!call.callerConfirmed && !call.calleeConfirmed) {
-        status = 'none_confirmed';
-      }
-
-      return res.json({
-        success: true,
-        status,
-        call
-      });
-    }
-
-    // ---------- обычный режим "biometric" ----------
-    if (!call) {
-      // создаём новую запись
-      call = {
-        callerPhone,
-        calleePhone,
-        callerName: userPhone === callerPhone ? userName : null,
-        calleeName: userPhone === calleePhone ? userName : null,
-        callerConfirmed: false,
-        calleeConfirmed: false,
-        timestamp: new Date().toISOString()
-      };
-      calls.push(call);
-    }
-
-    // отмечаем, кто подтвердил
-    if (userPhone === call.callerPhone) {
-      call.callerConfirmed = true;
-      call.callerName = userName;
-    } else if (userPhone === call.calleePhone) {
-      call.calleeConfirmed = true;
-      call.calleeName = userName;
-    }
-
-    let status = 'one_confirmed';
-    if (call.callerConfirmed && call.calleeConfirmed) {
-      status = 'both_confirmed';
-    }
-
-    res.json({
-      success: true,
-      status,
-      call
-    });
-  } catch (err) {
-    console.error('VERIFY error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
   }
+
+  const user = users[phone];
+
+  if (!user) {
+    return res.json({
+      success: true,
+      phone,
+      verified: false,
+      message: "Абонент не найден, подтверждений не было."
+    });
+  }
+
+  return res.json({
+    success: true,
+    phone,
+    name: user.name,
+    verified: !!user.verified,
+    message: user.verified
+      ? "Абонент уже подтверждал личность в приложении."
+      : "Абонент ещё не подтверждал личность в приложении."
+  });
+});
+
+// Просто проверка, что сервер жив
+app.get("/", (req, res) => {
+  res.send("Call verifier server is running");
 });
 
 app.listen(PORT, () => {
-  console.log('Server started on port ' + PORT);
+  console.log(`Server running on port ${PORT}`);
 });
