@@ -13,7 +13,7 @@ const users = {}; // пример: { "+79991234567": { name: "Аня", verified:
 // 1) Подтвердить личность
 // POST /verify  { phone: "+7999...", name: "Аня" }
 app.post("/verify", (req, res) => {
-  console.log("VERIFY request body:", req.body);  // логируем ТОЛЬКО req.body
+  console.log("VERIFY request body:", req.body);
 
   const { phone, name } = req.body;
 
