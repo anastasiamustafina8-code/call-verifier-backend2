@@ -10,16 +10,11 @@ app.use(express.json());
 // Память: номер телефона -> объект с флагом verified и именем
 const users = {}; // пример: { "+79991234567": { name: "Аня", verified: true } }
 
-app.post("/verify", (req, res) => {
-  console.log("VERIFY request body:", req.body);  // <‑ добавь эту строку
-  const { phone, name } = req.body;
-  ...
-});
-
-
 // 1) Подтвердить личность
 // POST /verify  { phone: "+7999...", name: "Аня" }
 app.post("/verify", (req, res) => {
+  console.log("VERIFY request body:", req.body);  // логируем ТОЛЬКО req.body
+
   const { phone, name } = req.body;
 
   if (!phone) {
